@@ -1,0 +1,14 @@
+<h2>Hello {{ current_user.username }}</h2>
+
+<form method="POST">
+  <input type="text" name="title" placeholder="New task">
+  <button>Add</button>
+</form>
+
+<ul>
+  {% for task in tasks %}
+    <li>{{ task.title }}</li>
+  {% endfor %}
+</ul>
+
+<a href="/logout">Logout</a>

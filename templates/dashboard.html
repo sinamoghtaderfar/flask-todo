@@ -1,0 +1,15 @@
+<h2>Welcome, {{ current_user.username }}</h2>
+
+<form method="POST">
+    <input type="text" name="title" placeholder="New Task">
+    <button type="submit">Add Task</button>
+</form>
+
+<h3>Your Tasks:</h3>
+<ul>
+    {% for task in tasks %}
+        <li>{{ task.title }} {% if task.completed %}(Done){% endif %}</li>
+    {% endfor %}
+</ul>
+
+<a href="{{ url_for('logout') }}">Logout</a>
