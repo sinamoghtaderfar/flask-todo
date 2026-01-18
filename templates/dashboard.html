@@ -1,15 +1,41 @@
-<h2>Welcome, {{ current_user.username }}</h2>
+{% extends "base.html" %}
 
-<form method="POST">
-    <input type="text" name="title" placeholder="New Task">
-    <button type="submit">Add Task</button>
-</form>
+{% block title %}Dashboard{% endblock %}
 
-<h3>Your Tasks:</h3>
-<ul>
-    {% for task in tasks %}
-        <li>{{ task.title }} {% if task.completed %}(Done){% endif %}</li>
-    {% endfor %}
-</ul>
+{% block content %}
+<div class="container mt-4">
 
-<a href="{{ url_for('logout') }}">Logout</a>
+    <!-- Form to add new task -->
+    <form method="POST" class="mb-4">
+        <div class="input-group">
+            <input type="text" name="title" class="form-control" placeholder="New Task" required>
+            <button type="submit" class="btn btn-primary">Add Task</button>
+        </div>
+    </form>
+
+    <!-- List of tasks -->
+    <h3>Your Tasks</h3>
+    <ul class="list-group" id="task-list">
+        {% for task in tasks %}
+        <li class="list-group-item d-flex justify-content-between align-items-center" data-task-id="{{ task.id }}">
+            <div>
+                {{ task.title }}
+                {% if task.completed %}
+                    <span class="badge bg-success ms-2">Done</span>
+                {% endif %}
+            </div>
+            <div>
+                <!-- Complete / Edit / Delete buttons -->
+                {% if not task.completed %}
+                <button class="btn btn-sm btn-success complete-btn">✔</button>
+                <button class="btn btn-sm btn-warning edit-btn">✎</button>
+                {% endif %}
+                <button class="btn btn-sm btn-danger delete-btn">🗑</button>
+            </div>
+        </li>
+        {% endfor %}
+    </ul>
+
+</div>
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+{% endblock %}

@@ -1,32 +1,10 @@
-<<<<<<< HEAD
-from flask import Flask
-from models import db, User, Task
-=======
 from flask import Flask, render_template, redirect, url_for, flash, request
 from flask_login import LoginManager, login_user, logout_user,login_required, current_user
 from flask_bcrypt import Bcrypt
->>>>>>> 38c008a (authentication (login-register) and dashboard.html)
 from flask_migrate import Migrate
 from dotenv import load_dotenv
 import os
 
-<<<<<<< HEAD
-load_dotenv()
-
-app = Flask(__name__)
-app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
-app.config['SQLALCHEMY_DATABASE_URI'] = f"mysql://{os.getenv('DB_USER')}:{os.getenv('DB_PASSWORD')}@{os.getenv('DB_HOST')}:{os.getenv('DB_PORT')}/{os.getenv('DB_NAME')}"
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-
-#db = SQLAlchemy(app)
-db.init_app(app)
-migrate = Migrate(app, db)
-
-from models import User, Task
-
-if __name__ == "__main__":
-    app.run(debug=True)
-=======
 from models import db, User, Task
 from forms import RegisterForm, LoginForm
 
@@ -134,4 +112,3 @@ def add_no_cache_headers(response):
 
 if __name__ == "__main__":
     app.run(debug=True)
->>>>>>> 38c008a (authentication (login-register) and dashboard.html)
