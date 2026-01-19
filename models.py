@@ -1,6 +1,6 @@
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin
-
+import uuid
 db = SQLAlchemy()
 
 class User(db.Model, UserMixin):
@@ -18,7 +18,14 @@ class Task(db.Model):
     __tablename__ = "tasks"
 
     id = db.Column(db.Integer, primary_key=True)
+    uuid = db.Column(
+        db.String(36),
+        unique=True,
+        nullable=False,
+        default=lambda: str(uuid.uuid4())
+    )
     title = db.Column(db.String(100), nullable=False)
+    description = db.Column(db.Text, nullable=False)
     completed = db.Column(db.Boolean, default=False)
 
     user_id = db.Column(

@@ -7,7 +7,7 @@ from datetime import timedelta
 import os
 
 from models import db, User, Task
-from forms import RegisterForm, LoginForm
+from forms import RegisterForm, LoginForm, AddTaskForm
 
 
 # --------config------------
@@ -44,15 +44,15 @@ def load_user(user_id):
 @login_required
 def dashboard():
     if request.method == "POST":
-
         title = request.form.get("title")
+        description = request.form.get("description")
         if title:
-            task = Task(title=title, owner=current_user)
+            task = Task(title=title, description=description, owner=current_user)
             db.session.add(task)
             db.session.commit()
-
     tasks = Task.query.filter_by(owner=current_user).all()
     return render_template("dashboard.html", tasks=tasks)
+
 
 @app.route("/register", methods=["GET", "POST"])
 def register():
@@ -107,20 +107,23 @@ def delete_task(task_id):
     db.session.delete(task)
     db.session.commit()
     return redirect(url_for("dashboard"))
-@app.route("/edit/<int:task_id>")
+
+@app.route("/task/<uuid>/edit", methods=["GET", "POST"])
 @login_required
-def edit_task(task_id):
-    task = Task.query.get_or_404(task_id)
+def edit_task(uuid):
+    task = Task.query.filter_by(
+        uuid=uuid,
+        owner=current_user
+    ).first_or_404()
 
-    if task.user_id != current_user.id:
-        abort(403)
-    new_title = request.args.get("title")
-
-    if new_title:
-        task.title = new_title
+    if request.method == "POST":
+        task.title = request.form.get("title")
+        task.description = request.form.get("description")
         db.session.commit()
+        return redirect(url_for("dashboard"))
 
-    return redirect(url_for("dashboard"))
+    return render_template("edit_task.html", task=task)
+
 
 @app.route("/complete/<int:task_id>")
 @login_required
