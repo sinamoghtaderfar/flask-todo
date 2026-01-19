@@ -1,8 +1,9 @@
-from flask import Flask, render_template, redirect, url_for, flash, request
+from flask import Flask, render_template, redirect, url_for, flash, request, abort, session
 from flask_login import LoginManager, login_user, logout_user,login_required, current_user
 from flask_bcrypt import Bcrypt
 from flask_migrate import Migrate
 from dotenv import load_dotenv
+from datetime import timedelta
 import os
 
 from models import db, User, Task
@@ -28,6 +29,7 @@ db.init_app(app)
 bcrypt = Bcrypt(app)
 migrate = Migrate(app, db)
 
+app.permanent_session_lifetime = timedelta(minutes=3)
 login_manager = LoginManager(app)
 login_manager.login_view = "login"
 
@@ -84,16 +86,52 @@ def login():
 
     form = LoginForm()
     if form.validate_on_submit():
-        user = User.query.filter_by(email=form.email.data).first()
+        user = User.query.filter_by(username=form.username.data).first()
         if user and bcrypt.check_password_hash(user.password, form.password.data):
-            login_user(user)  # ورود موفق
-            return redirect(url_for("dashboard"))  # 👈 این خط مهم است
+            login_user(user, remember=form.remember.data)
+            session.permanent = True
+            return redirect(url_for("dashboard"))
         else:
-            flash("Login failed. Check email and password.", "danger")
+            flash("Login failed. Check username and password.", "danger")
 
     return render_template("login.html", form=form)
 
+@app.route("/delete/<int:task_id>")
+@login_required
+def delete_task(task_id):
+    task = Task.query.get_or_404(task_id)
 
+    if task.user_id != current_user.id:
+        abort(403)
+
+    db.session.delete(task)
+    db.session.commit()
+    return redirect(url_for("dashboard"))
+@app.route("/edit/<int:task_id>")
+@login_required
+def edit_task(task_id):
+    task = Task.query.get_or_404(task_id)
+
+    if task.user_id != current_user.id:
+        abort(403)
+    new_title = request.args.get("title")
+
+    if new_title:
+        task.title = new_title
+        db.session.commit()
+
+    return redirect(url_for("dashboard"))
+
+@app.route("/complete/<int:task_id>")
+@login_required
+def complete_task(task_id):
+    task = Task.query.get_or_404(task_id)
+    if task.user_id != current_user.id:
+        abort(403)
+    task.completed = True
+    db.session.commit()
+
+    return redirect(url_for("dashboard"))
 
 @app.route("/logout")
 @login_required
