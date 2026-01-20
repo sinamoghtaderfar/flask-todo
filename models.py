@@ -10,6 +10,7 @@ class User(db.Model, UserMixin):
     username = db.Column(db.String(100), unique=True, nullable=False)
     email = db.Column(db.String(100), unique=True, nullable=False)
     password = db.Column(db.String(200), nullable=False)
+    profile_image = db.Column(db.String(200), nullable=True, default='default.png')
 
     tasks = db.relationship("Task", backref="owner", lazy=True)
 

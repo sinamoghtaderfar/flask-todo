@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}Profile{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h3 class="text-center mb-4">
+        Profile {{ current_user.username }}
+    </h3>
+
+    <form method="POST" enctype="multipart/form-data" id="profileForm">
+        {{ form.hidden_tag() }}
+
+        <!-- Profile Image -->
+        <div class="mb-3 text-center position-relative">
+            <img id="preview"
+                 src="{{ url_for('static', filename='profile_img/' ~ current_user.profile_image) }}"
+                 alt="Profile"
+                 class="rounded-circle border shadow"
+                 width="200"
+                 height="200">
+
+            {% if current_user.profile_image != "default.png" %}
+            <button type="button"
+                    class="btn btn-danger btn-sm position-absolute top-0 end-50 translate-middle-x"
+                    id="deleteProfileImage"
+                    title="Remove profile image">
+                <i class="fas fa-trash"></i>
+            </button>
+            {% endif %}
+        </div>
+
+        <!-- Upload -->
+        <div class="mb-3">
+            <label class="form-label">Select your image</label>
+            {{ form.profile_image(class="form-control") }}
+        </div>
+
+        {{ form.submit(class="btn btn-primary ") }}
+    </form>
+</div>
+{% endblock %}

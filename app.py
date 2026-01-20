@@ -1,13 +1,15 @@
-from flask import Flask, render_template, redirect, url_for, flash, request, abort, session
+from flask import Flask, render_template, redirect, url_for, flash, request, abort, session, jsonify
 from flask_login import LoginManager, login_user, logout_user,login_required, current_user
 from flask_bcrypt import Bcrypt
 from flask_migrate import Migrate
 from dotenv import load_dotenv
 from datetime import timedelta
+from werkzeug.utils import secure_filename
 import os
+import uuid
 
 from models import db, User, Task
-from forms import RegisterForm, LoginForm, AddTaskForm
+from forms import RegisterForm, LoginForm, AddTaskForm, UpdateProfileForm
 
 
 # --------config------------
@@ -135,6 +137,61 @@ def complete_task(task_id):
     db.session.commit()
 
     return redirect(url_for("dashboard"))
+
+
+@app.route("/profile", methods=["GET", "POST"])
+@login_required
+def profile():
+    form = UpdateProfileForm(obj=current_user)
+
+    if form.validate_on_submit():
+
+        upload_folder = os.path.join(app.root_path, "static/profile_img")
+        os.makedirs(upload_folder, exist_ok=True)
+
+        if form.profile_image.data:
+            file = form.profile_image.data
+
+            upload_folder = os.path.join(app.root_path, "static/profile_img")
+            os.makedirs(upload_folder, exist_ok=True)
+
+            old_image = current_user.profile_image
+
+            if old_image and old_image != "default.png":
+                old_path = os.path.join(upload_folder, old_image)
+
+                # محافظت اضافه
+                if os.path.exists(old_path) and os.path.isfile(old_path):
+                    os.remove(old_path)
+
+            ext = os.path.splitext(secure_filename(file.filename))[1]
+            filename = f"{uuid.uuid4()}{ext}"
+
+            file.save(os.path.join(upload_folder, filename))
+            current_user.profile_image = filename
+        db.session.commit()
+        flash("Profile updated successfully!", "success")
+        return redirect(url_for("profile"))
+
+    return render_template("profile.html", form=form)
+
+
+@app.route("/profile/delete-image", methods=["POST"])
+@login_required
+def delete_profile_image():
+    upload_folder = os.path.join(app.root_path, "static/profile_img")
+
+    if current_user.profile_image != "default.png":
+        old_path = os.path.join(upload_folder, current_user.profile_image)
+
+        if os.path.exists(old_path):
+            os.remove(old_path)
+
+        current_user.profile_image = "default.png"
+        db.session.commit()
+
+    return jsonify({"success": True})
+
 
 @app.route("/logout")
 @login_required

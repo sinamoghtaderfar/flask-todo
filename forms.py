@@ -1,7 +1,7 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SubmitField, BooleanField, TextAreaField
+from wtforms import FileField, StringField, PasswordField, SubmitField, BooleanField, TextAreaField
 from wtforms.validators import DataRequired, Length, Email, EqualTo
-
+from flask_wtf.file import FileAllowed
 
 class RegisterForm(FlaskForm):
 
@@ -22,5 +22,10 @@ class LoginForm(FlaskForm):
 
 class AddTaskForm(FlaskForm):
     title = StringField("Title", validators=[DataRequired()])
-    description = TextAreaField("Description")  # توضیحات
+    description = TextAreaField("Description")
     submit = SubmitField("Add Task")
+
+class UpdateProfileForm(FlaskForm):
+    #username = StringField("Username", validators=[DataRequired()])
+    profile_image = FileField("Profile Image", validators=[FileAllowed(['jpg','png','jpeg'])])
+    submit = SubmitField("Update Profile")
