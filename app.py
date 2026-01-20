@@ -160,7 +160,6 @@ def profile():
             if old_image and old_image != "default.png":
                 old_path = os.path.join(upload_folder, old_image)
 
-                # محافظت اضافه
                 if os.path.exists(old_path) and os.path.isfile(old_path):
                     os.remove(old_path)
 
