@@ -1,16 +1,31 @@
 from flask_wtf import FlaskForm
-from wtforms import FileField, StringField, PasswordField, SubmitField, BooleanField, TextAreaField
+from wtforms import (
+    FileField,
+    StringField,
+    PasswordField,
+    SubmitField,
+    BooleanField,
+    TextAreaField,
+)
 from wtforms.validators import DataRequired, Length, Email, EqualTo
 from flask_wtf.file import FileAllowed
 
+
 class RegisterForm(FlaskForm):
 
-    username = StringField("Username", validators=[DataRequired(), Length(min=6, max=10)])
+    username = StringField(
+        "Username", validators=[DataRequired(), Length(min=6, max=10)]
+    )
     email = StringField("Email", validators=[DataRequired(), Email()])
-    password = StringField("Password", validators=[DataRequired(), Length(min=8, max=12)])
-    confirm_password = PasswordField("Confirm Password", validators=[DataRequired(),EqualTo("password")])
+    password = StringField(
+        "Password", validators=[DataRequired(), Length(min=8, max=12)]
+    )
+    confirm_password = PasswordField(
+        "Confirm Password", validators=[DataRequired(), EqualTo("password")]
+    )
 
     submit = SubmitField("Register")
+
 
 class LoginForm(FlaskForm):
 
@@ -25,7 +40,17 @@ class AddTaskForm(FlaskForm):
     description = TextAreaField("Description")
     submit = SubmitField("Add Task")
 
+
 class UpdateProfileForm(FlaskForm):
-    #username = StringField("Username", validators=[DataRequired()])
-    profile_image = FileField("Profile Image", validators=[FileAllowed(['jpg','png','jpeg'])])
+    # username = StringField("Username", validators=[DataRequired()])
+    profile_image = FileField(
+        "Profile Image", validators=[FileAllowed(["jpg", "png", "jpeg"])]
+    )
     submit = SubmitField("Update Profile")
+
+
+class OTPForm(FlaskForm):
+    otp_code = StringField("OTP Code", validators=[DataRequired(), Length(5,6)])
+    new_password = PasswordField("New Password", validators=[DataRequired()])
+    confirm_password = PasswordField("Confirm Password", validators=[DataRequired(), EqualTo("new_password")])
+    submit = SubmitField("Confirm")

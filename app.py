@@ -1,15 +1,32 @@
-from flask import Flask, render_template, redirect, url_for, flash, request, abort, session, jsonify
-from flask_login import LoginManager, login_user, logout_user,login_required, current_user
+from flask import (
+    Flask,
+    render_template,
+    redirect,
+    url_for,
+    flash,
+    request,
+    abort,
+    session,
+    jsonify,
+)
+from flask_login import (
+    LoginManager,
+    login_user,
+    logout_user,
+    login_required,
+    current_user,
+)
 from flask_bcrypt import Bcrypt
+from flask_mail import Mail
 from flask_migrate import Migrate
 from dotenv import load_dotenv
-from datetime import timedelta
+from datetime import timedelta, datetime
 from werkzeug.utils import secure_filename
 import os
 import uuid
 
 from models import db, User, Task
-from forms import RegisterForm, LoginForm, AddTaskForm, UpdateProfileForm
+from forms import RegisterForm, LoginForm, UpdateProfileForm, OTPForm
 
 
 # --------config------------
@@ -26,6 +43,32 @@ app.config["SQLALCHEMY_DATABASE_URI"] = (
 )
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
+app.config['MAIL_SERVER'] = os.getenv("MAIL_SERVER")
+app.config['MAIL_PORT'] = int(os.getenv("MAIL_PORT"))
+app.config['MAIL_USE_TLS'] = os.getenv("MAIL_USE_TLS") == "True"
+app.config['MAIL_USERNAME'] = os.getenv("MAIL_USERNAME")
+app.config['MAIL_PASSWORD'] = os.getenv("MAIL_PASSWORD")
+app.config['MAIL_DEFAULT_SENDER'] = os.getenv("MAIL_DEFAULT_SENDER")
+
+mail = Mail(app)
+
+
+
+import random
+from datetime import datetime
+from flask_mail import Message
+from app import mail, db
+
+def send_otp(user):
+    otp = str(random.randint(100000, 999999))  # 6 رقمی
+    user.otp_code = otp
+    user.otp_expiration = datetime.utcnow() + datetime.timedelta(minutes=5)
+    db.session.commit()
+
+
+    msg = Message("Your OTP Code", recipients=[user.email])
+    msg.body = f"Your OTP code is: {otp}. It will expire in 5 minutes."
+    mail.send(msg)
 # --------------------
 db.init_app(app)
 bcrypt = Bcrypt(app)
@@ -35,10 +78,10 @@ app.permanent_session_lifetime = timedelta(minutes=3)
 login_manager = LoginManager(app)
 login_manager.login_view = "login"
 
+
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
-
 
 
 # ---------Routes-----------
@@ -69,9 +112,7 @@ def register():
             return redirect(url_for("login"))
         hashed_pw = bcrypt.generate_password_hash(form.password.data).decode("utf-8")
         user = User(
-            username=form.username.data,
-            email=form.email.data,
-            password=hashed_pw
+            username=form.username.data, email=form.email.data, password=hashed_pw
         )
         db.session.add(user)
         db.session.commit()
@@ -84,7 +125,7 @@ def register():
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if current_user.is_authenticated:
-        return redirect(url_for("dashboard"))  # اگر قبلاً login شده
+        return redirect(url_for("dashboard"))
 
     form = LoginForm()
     if form.validate_on_submit():
@@ -98,6 +139,7 @@ def login():
 
     return render_template("login.html", form=form)
 
+
 @app.route("/delete/<int:task_id>")
 @login_required
 def delete_task(task_id):
@@ -110,13 +152,11 @@ def delete_task(task_id):
     db.session.commit()
     return redirect(url_for("dashboard"))
 
+
 @app.route("/task/<uuid>/edit", methods=["GET", "POST"])
 @login_required
 def edit_task(uuid):
-    task = Task.query.filter_by(
-        uuid=uuid,
-        owner=current_user
-    ).first_or_404()
+    task = Task.query.filter_by(uuid=uuid, owner=current_user).first_or_404()
 
     if request.method == "POST":
         task.title = request.form.get("title")
@@ -191,6 +231,43 @@ def delete_profile_image():
 
     return jsonify({"success": True})
 
+@app.route("/profile/change-password", methods=["GET", "POST"])
+@login_required
+def change_password():
+    form = OTPForm()
+
+    if request.method == "POST" and form.validate_on_submit():
+        otp = form.otp_code.data
+
+        if current_user.otp_code != otp:
+            flash("Invalid OTP code", "danger")
+            return redirect(url_for("change_password"))
+
+        if current_user.otp_expiration < datetime.utcnow():
+            flash("OTP expired. Request a new one.", "warning")
+            return redirect(url_for("request_new_otp"))
+
+
+        hashed_password = bcrypt.generate_password_hash(form.new_password.data).decode("utf-8")
+        current_user.password = hashed_password
+
+
+        current_user.otp_code = None
+        current_user.otp_expiration = None
+
+        db.session.commit()
+        flash("Password updated successfully!", "success")
+        return redirect(url_for("profile"))
+
+    return render_template("change_password.html", form=form)
+
+@app.route("/profile/request-otp", methods=["POST"])
+@login_required
+def request_new_otp():
+    send_otp(current_user)
+    flash("OTP sent to your email!", "info")
+    return redirect(url_for("change_password"))
+
 
 @app.route("/logout")
 @login_required
@@ -198,6 +275,7 @@ def logout():
     logout_user()
     flash("You have been logged out.", "info")
     return redirect(url_for("login"))
+
 
 @app.after_request
 def add_no_cache_headers(response):

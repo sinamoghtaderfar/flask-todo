@@ -1,7 +1,9 @@
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin
 import uuid
+
 db = SQLAlchemy()
+
 
 class User(db.Model, UserMixin):
     __tablename__ = "users"
@@ -10,7 +12,10 @@ class User(db.Model, UserMixin):
     username = db.Column(db.String(100), unique=True, nullable=False)
     email = db.Column(db.String(100), unique=True, nullable=False)
     password = db.Column(db.String(200), nullable=False)
-    profile_image = db.Column(db.String(200), nullable=True, default='default.png')
+    profile_image = db.Column(db.String(200), nullable=True, default="default.png")
+
+    otp_code = db.Column(db.String(6), nullable=True)
+    otp_expiration = db.Column(db.DateTime, nullable=True)
 
     tasks = db.relationship("Task", backref="owner", lazy=True)
 
@@ -20,17 +25,10 @@ class Task(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     uuid = db.Column(
-        db.String(36),
-        unique=True,
-        nullable=False,
-        default=lambda: str(uuid.uuid4())
+        db.String(36), unique=True, nullable=False, default=lambda: str(uuid.uuid4())
     )
     title = db.Column(db.String(100), nullable=False)
     description = db.Column(db.Text, nullable=False)
     completed = db.Column(db.Boolean, default=False)
 
-    user_id = db.Column(
-        db.Integer,
-        db.ForeignKey("users.id"),
-        nullable=False
-    )
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
