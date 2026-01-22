@@ -16,11 +16,11 @@ from flask_login import (
     login_required,
     current_user,
 )
-from flask_bcrypt import Bcrypt
+from flask_bcrypt import Bcrypt, generate_password_hash
 from flask_mail import Mail
 from flask_migrate import Migrate
 from dotenv import load_dotenv
-from datetime import timedelta, datetime
+import datetime
 from werkzeug.utils import secure_filename
 import os
 import uuid
@@ -53,28 +53,28 @@ app.config['MAIL_DEFAULT_SENDER'] = os.getenv("MAIL_DEFAULT_SENDER")
 mail = Mail(app)
 
 
-
 import random
-from datetime import datetime
+#from datetime import datetime
 from flask_mail import Message
 from app import mail, db
 
-def send_otp(user):
-    otp = str(random.randint(100000, 999999))  # 6 رقمی
-    user.otp_code = otp
-    user.otp_expiration = datetime.utcnow() + datetime.timedelta(minutes=5)
+def otp(user):
+    # ساخت OTP 6 رقمی
+    otp_code = str(random.randint(100000, 999999))
+    user.otp_code = otp_code
+
     db.session.commit()
 
-
     msg = Message("Your OTP Code", recipients=[user.email])
-    msg.body = f"Your OTP code is: {otp}. It will expire in 5 minutes."
+    msg.body = f"Your OTP code is: {otp_code}."
     mail.send(msg)
+
 # --------------------
 db.init_app(app)
 bcrypt = Bcrypt(app)
 migrate = Migrate(app, db)
 
-app.permanent_session_lifetime = timedelta(minutes=3)
+app.permanent_session_lifetime = datetime.timedelta(minutes=3)
 login_manager = LoginManager(app)
 login_manager.login_view = "login"
 
@@ -183,7 +183,7 @@ def complete_task(task_id):
 @login_required
 def profile():
     form = UpdateProfileForm(obj=current_user)
-
+    otp_form = OTPForm()
     if form.validate_on_submit():
 
         upload_folder = os.path.join(app.root_path, "static/profile_img")
@@ -212,7 +212,7 @@ def profile():
         flash("Profile updated successfully!", "success")
         return redirect(url_for("profile"))
 
-    return render_template("profile.html", form=form)
+    return render_template("profile.html", form=form, otp_form=otp_form)
 
 
 @app.route("/profile/delete-image", methods=["POST"])
@@ -231,40 +231,60 @@ def delete_profile_image():
 
     return jsonify({"success": True})
 
-@app.route("/profile/change-password", methods=["GET", "POST"])
+@app.route("/profile/change-password", methods=["POST"])
 @login_required
 def change_password():
     form = OTPForm()
 
-    if request.method == "POST" and form.validate_on_submit():
+    # اگر request از AJAX است
+    is_ajax = request.headers.get("X-Requested-With") == "XMLHttpRequest"
+
+    if form.validate_on_submit():
         otp = form.otp_code.data
+        new_pass = form.new_password.data
+        confirm_pass = form.confirm_password.data
 
-        if current_user.otp_code != otp:
-            flash("Invalid OTP code", "danger")
-            return redirect(url_for("change_password"))
+        if otp != current_user.otp_code:
+            msg = "Invalid OTP code"
+            if is_ajax:
+                return jsonify(success=False, message=msg)
+            flash(msg, "danger")
+            return redirect(url_for("profile"))
 
-        if current_user.otp_expiration < datetime.utcnow():
-            flash("OTP expired. Request a new one.", "warning")
-            return redirect(url_for("request_new_otp"))
+        if new_pass != confirm_pass:
+            msg = "Passwords do not match"
+            if is_ajax:
+                return jsonify(success=False, message=msg)
+            flash(msg, "danger")
+            return redirect(url_for("profile"))
 
-
-        hashed_password = bcrypt.generate_password_hash(form.new_password.data).decode("utf-8")
+        # تغییر پسورد
+        hashed_password = generate_password_hash(new_pass)
         current_user.password = hashed_password
-
-
         current_user.otp_code = None
         current_user.otp_expiration = None
-
         db.session.commit()
-        flash("Password updated successfully!", "success")
+
+        msg = "Password updated successfully!"
+        if is_ajax:
+            return jsonify(success=True, message=msg)
+
+        flash(msg, "success")
         return redirect(url_for("profile"))
 
-    return render_template("change_password.html", form=form)
+    # اگر فرم اعتبارسنجی نشد
+    msg = "Invalid input"
+    if is_ajax:
+        return jsonify(success=False, message=msg)
+
+    flash(msg, "danger")
+    return redirect(url_for("profile"))
+
 
 @app.route("/profile/request-otp", methods=["POST"])
 @login_required
 def request_new_otp():
-    send_otp(current_user)
+    otp(current_user)
     flash("OTP sent to your email!", "info")
     return redirect(url_for("change_password"))
 

@@ -3,14 +3,12 @@
 
 {% block content %}
 <div class="container mt-4">
-    <h3 class="text-center mb-4">
-        Profile {{ current_user.username }}
-    </h3>
+    <h3 class="text-center mb-4">Profile {{ current_user.username }}</h3>
 
+    <!-- ================= PROFILE IMAGE ================= -->
     <form method="POST" enctype="multipart/form-data" id="profileForm">
         {{ form.hidden_tag() }}
 
-        <!-- Profile Image -->
         <div class="mb-3 text-center position-relative">
             <img id="preview"
                  src="{{ url_for('static', filename='profile_img/' ~ current_user.profile_image) }}"
@@ -29,13 +27,85 @@
             {% endif %}
         </div>
 
-        <!-- Upload -->
         <div class="mb-3">
             <label class="form-label">Select your image</label>
             {{ form.profile_image(class="form-control") }}
         </div>
 
-        {{ form.submit(class="btn btn-primary ") }}
+        {{ form.submit(class="btn btn-primary") }}
+    </form>
+
+    <hr class="my-5">
+
+    <!-- ================= CHANGE PASSWORD WITH OTP ================= -->
+    <h4 class="mb-3">Change Password</h4>
+
+    <div id="otp-messages"></div>
+
+    <!-- Step 1: Request OTP -->
+    <button type="button" class="btn btn-outline-primary" id="sendOtpBtn">
+        Send OTP to Email
+    </button>
+
+    <!-- Step 2: Verify OTP & Change Password -->
+    <form id="changePasswordForm" class="mt-4">
+        {{ otp_form.hidden_tag() }}
+
+        <div class="mb-3">
+            {{ otp_form.otp_code.label(class="form-label") }}
+            {{ otp_form.otp_code(class="form-control", placeholder="Enter OTP") }}
+        </div>
+
+        <div class="mb-3">
+            {{ otp_form.new_password.label(class="form-label") }}
+            {{ otp_form.new_password(class="form-control", placeholder="New password") }}
+        </div>
+
+        <div class="mb-3">
+            {{ otp_form.confirm_password.label(class="form-label") }}
+            {{ otp_form.confirm_password(class="form-control", placeholder="Confirm password") }}
+        </div>
+
+        <button type="submit" class="btn btn-success">Update Password</button>
     </form>
 </div>
+
+<script>
+const otpBtn = document.getElementById("sendOtpBtn");
+const otpMsg = document.getElementById("otp-messages");
+const changeForm = document.getElementById("changePasswordForm");
+
+// ارسال OTP با AJAX
+otpBtn.addEventListener("click", () => {
+    fetch("{{ url_for('request_new_otp') }}", {
+        method: "POST",
+        headers: {'X-Requested-With': 'XMLHttpRequest'}
+    })
+    .then(res => res.json())
+    .then(data => {
+        otpMsg.innerHTML = `<div class="alert alert-info">${data.message}</div>`;
+    });
+});
+
+// تغییر پسورد با AJAX
+changeForm.addEventListener("submit", (e) => {
+    e.preventDefault();
+    const formData = new FormData(changeForm);
+
+    fetch("{{ url_for('change_password') }}", {
+        method: "POST",
+        body: formData,
+        headers: {'X-Requested-With': 'XMLHttpRequest'}
+    })
+    .then(res => res.json())
+    .then(data => {
+        if(data.success){
+            otpMsg.innerHTML = `<div class="alert alert-success">${data.message}</div>`;
+            changeForm.reset();
+        } else {
+            otpMsg.innerHTML = `<div class="alert alert-danger">${data.message}</div>`;
+        }
+    });
+});
+</script>
 {% endblock %}
