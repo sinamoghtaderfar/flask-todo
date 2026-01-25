@@ -34,10 +34,8 @@
                 <!-- Complete / Edit / Delete buttons -->
                 {% if not task.completed %}
                 <button class="btn btn-sm btn-success complete-btn">✔</button>
-<a href="{{ url_for('edit_task', uuid=task.uuid) }}"
-   class="btn btn-sm btn-outline-warning">
-   Edit
-</a>
+<a href="{{ url_for('action.edit_task', task_uuid=task.uuid) }}" class="btn btn-sm btn-outline-warning">Edit</a>
+
                 {% endif %}
                 <button class="btn btn-sm btn-danger delete-btn">🗑</button>
             </div>

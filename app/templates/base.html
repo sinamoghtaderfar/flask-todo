@@ -18,7 +18,13 @@
 <!-- font-awesome CDN -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.0.1/css/all.min.css" integrity="sha512-2SwdPD6INVrV/lHTZbO2nodKhrnDdJK9/kg2XD1r9uGqPo1cUbujc+IYdlYdEErWNu69gVcYgdxlmVmzTWnetw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 
-
+<script>
+const urls = {
+    delete: "{{ url_for('action.delete_task', task_id=0) }}",
+    complete: "{{ url_for('action.complete_task', task_id=0) }}",
+    edit: "{{ url_for('action.edit_task', task_uuid='PLACEHOLDER') }}"
+};
+</script>
 
 <!-- delete function  task-->
 <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
@@ -26,8 +32,7 @@
 <script src="{{ url_for('static', filename='js/timer.js') }}"></script>
 <!-- delete function profile img -->
 <script src="{{ url_for('static', filename='js/profile.js') }}"></script>
-<!-- otps -->
-<script src="{{ url_for('static', filename='js/otp.js') }}"></script>
+
 </body>
 </html>
 

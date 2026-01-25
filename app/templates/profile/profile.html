@@ -69,7 +69,6 @@
         <button type="submit" class="btn btn-success">Update Password</button>
     </form>
 </div>
-
 <script>
 const otpBtn = document.getElementById("sendOtpBtn");
 const otpMsg = document.getElementById("otp-messages");
@@ -77,7 +76,7 @@ const changeForm = document.getElementById("changePasswordForm");
 
 // ارسال OTP با AJAX
 otpBtn.addEventListener("click", () => {
-    fetch("{{ url_for('request_new_otp') }}", {
+    fetch("{{ url_for('profile.request_otp') }}", {
         method: "POST",
         headers: {'X-Requested-With': 'XMLHttpRequest'}
     })
@@ -87,12 +86,12 @@ otpBtn.addEventListener("click", () => {
     });
 });
 
-// تغییر پسورد با AJAX
+
 changeForm.addEventListener("submit", (e) => {
-    e.preventDefault();
+    e.preventDefault(); // جلوی ارسال فرم به صورت عادی
     const formData = new FormData(changeForm);
 
-    fetch("{{ url_for('change_password') }}", {
+    fetch("{{ url_for('profile.change_password') }}", {
         method: "POST",
         body: formData,
         headers: {'X-Requested-With': 'XMLHttpRequest'}
@@ -102,10 +101,20 @@ changeForm.addEventListener("submit", (e) => {
         if(data.success){
             otpMsg.innerHTML = `<div class="alert alert-success">${data.message}</div>`;
             changeForm.reset();
+            setTimeout(() => {
+        window.location.href = data.redirect;
+        }, 3000);
+
         } else {
             otpMsg.innerHTML = `<div class="alert alert-danger">${data.message}</div>`;
         }
+    })
+    .catch(err => {
+        console.error(err);
+        otpMsg.innerHTML = `<div class="alert alert-danger">Something went wrong!</div>`;
     });
 });
+
 </script>
+
 {% endblock %}

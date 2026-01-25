@@ -1,8 +1,8 @@
-from flask_sqlalchemy import SQLAlchemy
+from app.extensions import db
 from flask_login import UserMixin
 import uuid
 
-db = SQLAlchemy()
+
 
 
 class User(db.Model, UserMixin):
