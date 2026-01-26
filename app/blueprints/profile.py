@@ -1,8 +1,9 @@
+from datetime import datetime, timedelta
 import os
 import uuid
 
 
-from flask import Blueprint, render_template, redirect, url_for, flash, request, jsonify, abort
+from flask import Blueprint, render_template, redirect, url_for, flash, jsonify, request
 from flask_login import login_required, current_user, logout_user
 from werkzeug.utils import secure_filename
 
@@ -14,25 +15,32 @@ import random
 
 from flask import current_app
 
-from app.models import Task
+
 
 profile_bp = Blueprint("profile", __name__, url_prefix="/profile")
 
 def send_otp(user):
     code = str(random.randint(100000, 999999))
     user.otp_code = code
+
+    user.otp_expiration = datetime.utcnow() + timedelta(minutes=1)
     db.session.commit()
 
     msg = Message("OTP Code", recipients=[user.email])
     msg.body = f"Your OTP code is: {code}"
     mail.send(msg)
 
+    return user.otp_expiration
+
 @profile_bp.route("/request-otp", methods=["POST"])
 @login_required
 def request_otp():
-    send_otp(current_user)
-
-    return jsonify({"success": True, "message": "OTP sent! Check your email."})
+    esexpiration = send_otp(current_user)
+    return jsonify({
+        "success": True,
+        "message": "OTP sent! Check your email.",
+        "expires_at": esexpiration.isoformat() + "Z"
+    })
 
 @profile_bp.route("/profile", methods=["GET", "POST"])
 @login_required
@@ -89,28 +97,23 @@ def delete_profile_image():
 @profile_bp.route("/change-password", methods=["POST"])
 @login_required
 def change_password():
-    form = OTPForm()
+    otp_code = request.form.get("otp_code")
+    new_password = request.form.get("new_password")
 
-    if form.validate_on_submit():
-        if form.otp_code.data != current_user.otp_code:
-            return jsonify(success=False, message="Invalid OTP")
+    if current_user.otp_code != otp_code:
+        return jsonify({"success": False, "message": "Invalid OTP!"})
 
-        current_user.password = generate_password_hash(form.new_password.data)
-        current_user.otp_code = None
-        db.session.commit()
+    if datetime.utcnow() > current_user.otp_expiration:
+        return jsonify({"success": False, "message": "OTP expired!"})
 
-        logout_user()
+    current_user.password = generate_password_hash(new_password)
+    current_user.otp_code = None
+    current_user.otp_expiration = None
+    db.session.commit()
 
-        return jsonify({
-            "success": True,
-            "message": "Password updated successfully! You will be logged out in 3 seconds.",
-            "redirect": url_for("auth.login")
-        })
+    logout_user()
 
-
-    errors = []
-    for field, error_list in form.errors.items():
-        errors.extend(error_list)
-    return jsonify({"success": False, "message": " ".join(errors)})
+    return jsonify(
+        {"success": True, "message": "Password updated successfully!", "redirect": url_for('auth.login')})
 
 

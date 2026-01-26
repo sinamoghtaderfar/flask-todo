@@ -47,6 +47,8 @@
         Send OTP to Email
     </button>
 
+    <div id="otp-timer" class="mt-2 text-danger" style="display:none;"></div>
+
     <!-- Step 2: Verify OTP & Change Password -->
     <form id="changePasswordForm" class="mt-4">
         {{ otp_form.hidden_tag() }}
@@ -73,6 +75,7 @@
 const otpBtn = document.getElementById("sendOtpBtn");
 const otpMsg = document.getElementById("otp-messages");
 const changeForm = document.getElementById("changePasswordForm");
+let timerInterval; // برای تایمر
 
 // ارسال OTP با AJAX
 otpBtn.addEventListener("click", () => {
@@ -83,10 +86,46 @@ otpBtn.addEventListener("click", () => {
     .then(res => res.json())
     .then(data => {
         otpMsg.innerHTML = `<div class="alert alert-info">${data.message}</div>`;
+
+        // نمایش div تایمر وقتی OTP ارسال شد
+        const otpTimerDiv = document.getElementById("otp-timer");
+        otpTimerDiv.style.display = "block"; // نمایش div
+        otpTimerDiv.innerText = ""; // پاک کردن متن قبلی
+
+        const expiresAt = new Date(data.expires_at);
+        startOtpTimer(expiresAt);
+    })
+    .catch(err => {
+        console.error(err);
+        otpMsg.innerHTML = `<div class="alert alert-danger">Failed to send OTP!</div>`;
     });
 });
 
+// تابع شروع تایمر OTP
+function startOtpTimer(expirationTime) {
+    clearInterval(timerInterval); // تایمر قبلی را پاک کن
 
+    function updateTimer() {
+        const now = new Date(); // زمان فعلی مرورگر
+        let diff = Math.floor((expirationTime - now) / 1000); // اختلاف ثانیه
+
+        const otpTimerDiv = document.getElementById("otp-timer");
+
+        if (diff <= 0) {
+            clearInterval(timerInterval);
+            otpTimerDiv.innerText = "OTP expired!";
+        } else {
+            const minutes = Math.floor(diff / 60);
+            const seconds = diff % 60;
+            otpTimerDiv.innerText = `Time left: ${minutes}:${seconds.toString().padStart(2,'0')}`;
+        }
+    }
+
+    updateTimer(); // یک بار بلافاصله اجرا شود
+    timerInterval = setInterval(updateTimer, 1000);
+}
+
+// ارسال فرم تغییر رمز عبور
 changeForm.addEventListener("submit", (e) => {
     e.preventDefault(); // جلوی ارسال فرم به صورت عادی
     const formData = new FormData(changeForm);
@@ -101,9 +140,10 @@ changeForm.addEventListener("submit", (e) => {
         if(data.success){
             otpMsg.innerHTML = `<div class="alert alert-success">${data.message}</div>`;
             changeForm.reset();
+            clearInterval(timerInterval); // تایمر را متوقف کن
             setTimeout(() => {
-        window.location.href = data.redirect;
-        }, 3000);
+                window.location.href = data.redirect;
+            }, 1000);
 
         } else {
             otpMsg.innerHTML = `<div class="alert alert-danger">${data.message}</div>`;
@@ -114,7 +154,6 @@ changeForm.addEventListener("submit", (e) => {
         otpMsg.innerHTML = `<div class="alert alert-danger">Something went wrong!</div>`;
     });
 });
-
 </script>
 
 {% endblock %}
