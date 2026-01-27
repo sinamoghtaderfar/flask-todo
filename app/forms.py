@@ -1,4 +1,5 @@
 from flask_wtf import FlaskForm
+from flask_wtf.file import FileAllowed
 from wtforms import (
     FileField,
     StringField,
@@ -8,7 +9,6 @@ from wtforms import (
     TextAreaField,
 )
 from wtforms.validators import DataRequired, Length, Email, EqualTo
-from flask_wtf.file import FileAllowed
 
 
 class RegisterForm(FlaskForm):
@@ -50,10 +50,13 @@ class UpdateProfileForm(FlaskForm):
 
 
 class OTPForm(FlaskForm):
-    otp_code = StringField("OTP Code", validators=[DataRequired(), Length(5,6)])
+    otp_code = StringField("OTP Code", validators=[DataRequired(), Length(5, 6)])
     new_password = PasswordField("New Password", validators=[DataRequired()])
-    confirm_password = PasswordField("Confirm Password", validators=[DataRequired(), EqualTo("new_password")])
+    confirm_password = PasswordField(
+        "Confirm Password", validators=[DataRequired(), EqualTo("new_password")]
+    )
     submit = SubmitField("Confirm")
+
 
 class RequestOTPForm(FlaskForm):
     email_or_username = StringField("Email or Username", validators=[DataRequired()])

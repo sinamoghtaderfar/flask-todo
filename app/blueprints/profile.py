@@ -1,24 +1,29 @@
-from datetime import datetime, timedelta
 import os
 import uuid
+import random
+from datetime import datetime, timedelta
 
-
-from flask import Blueprint, render_template, redirect, url_for, flash, jsonify, request
-from flask_login import login_required, current_user, logout_user
+from flask import (
+    Blueprint,
+    render_template,
+    redirect,
+    url_for,
+    flash,
+    jsonify,
+    request,
+    current_app,
+)
+from flask_login import login_required, current_user
 from werkzeug.utils import secure_filename
+from flask_mail import Message
+from flask_bcrypt import generate_password_hash
 
 from app import User
 from app.extensions import db, mail
 from app.forms import UpdateProfileForm, OTPForm
-from flask_mail import Message
-from flask_bcrypt import generate_password_hash
-import random
-
-from flask import current_app
-
-
 
 profile_bp = Blueprint("profile", __name__, url_prefix="/profile")
+
 
 def send_otp(user):
     code = str(random.randint(100000, 999999))
@@ -33,15 +38,19 @@ def send_otp(user):
 
     return user.otp_expiration
 
+
 @profile_bp.route("/request-otp", methods=["POST"])
 @login_required
 def request_otp():
     esexpiration = send_otp(current_user)
-    return jsonify({
-        "success": True,
-        "message": "OTP sent! Check your email.",
-        "expires_at": esexpiration.isoformat() + "Z"
-    })
+    return jsonify(
+        {
+            "success": True,
+            "message": "OTP sent! Check your email.",
+            "expires_at": esexpiration.isoformat() + "Z",
+        }
+    )
+
 
 @profile_bp.route("/profile", methods=["GET", "POST"])
 @login_required
@@ -82,7 +91,7 @@ def profile():
 @profile_bp.route("/delete-image", methods=["POST"])
 @login_required
 def delete_profile_image():
-    #print("Delete image called!")
+    # print("Delete image called!")
     upload_folder = os.path.join(current_app.root_path, "static/profile_img")
 
     if current_user.profile_image != "default.png":
@@ -100,36 +109,32 @@ def change_password():
     otp_code = request.form.get("otp_code")
     new_password = request.form.get("new_password")
 
-    # اگر کاربر لاگین است
     if current_user.is_authenticated:
         user = current_user
-        # بررسی OTP اگر ارسال شده
+
         if user.otp_code != otp_code:
             return jsonify({"success": False, "message": "Invalid OTP!"})
     else:
-        # کاربر لاگین نیست → کاربر را بر اساس OTP پیدا می‌کنیم
         user = User.query.filter_by(otp_code=otp_code).first()
         if not user:
             return jsonify({"success": False, "message": "Invalid OTP!"})
 
-    # بررسی تاریخ انقضا OTP
     if datetime.utcnow() > user.otp_expiration:
         return jsonify({"success": False, "message": "OTP expired!"})
 
-    # تغییر رمز
     user.password = generate_password_hash(new_password)
     user.otp_code = None
     user.otp_expiration = None
     db.session.commit()
 
-    # تعیین مقصد redirect
-    redirect_url = url_for('auth.login')  # برای کاربر فراموشی رمز
+    redirect_url = url_for("auth.login")
     if current_user.is_authenticated:
-        redirect_url = url_for('auth.login')  # یا صفحه پروفایل کاربر لاگین شده
+        redirect_url = url_for("auth.login")
 
-    return jsonify({
-        "success": True,
-        "message": "Password updated successfully!",
-        "redirect": redirect_url
-    })
-
+    return jsonify(
+        {
+            "success": True,
+            "message": "Password updated successfully!",
+            "redirect": redirect_url,
+        }
+    )

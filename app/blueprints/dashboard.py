@@ -1,9 +1,11 @@
-from flask import Blueprint, render_template, request, redirect, url_for, abort
+from flask import Blueprint, render_template, request, redirect, url_for
 from flask_login import login_required, current_user
+
 from app.extensions import db
 from app.models import Task
 
 dashboard_bp = Blueprint("dashboard", __name__)
+
 
 @dashboard_bp.route("/dashboard", methods=["GET", "POST"])
 @login_required
@@ -12,7 +14,7 @@ def dashboard():
         title = request.form.get("title")
         description = request.form.get("description")
         if title:
-            task = Task(title=title, description= description, owner=current_user)
+            task = Task(title=title, description=description, owner=current_user)
             db.session.add(task)
             db.session.commit()
 

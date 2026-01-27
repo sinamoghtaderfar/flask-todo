@@ -1,10 +1,12 @@
-from flask import Flask, render_template, request, redirect, url_for, abort, Blueprint
+from flask import render_template, request, redirect, url_for, abort, Blueprint
 from flask_login import login_required, current_user
+
 from app.extensions import db
 from app.models import Task
 
-#app = Flask(__name__)
 action_bp = Blueprint("action", __name__, url_prefix="/action")
+
+
 # ================== EDIT TASK ==================
 @action_bp.route("/task/<task_uuid>/edit", methods=["GET", "POST"])
 @login_required
@@ -19,6 +21,7 @@ def edit_task(task_uuid):
 
     return render_template("dashboard/edit_task.html", task=task)
 
+
 # ================== DELETE TASK ==================
 @action_bp.route("/task/<int:task_id>/delete")
 @login_required
@@ -31,6 +34,7 @@ def delete_task(task_id):
     db.session.delete(task)
     db.session.commit()
     return redirect(url_for("dashboard.dashboard"))
+
 
 # ================== COMPLETE TASK ==================
 @action_bp.route("/task/<int:task_id>/complete")
