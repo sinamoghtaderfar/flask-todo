@@ -1,7 +1,9 @@
 from flask import Blueprint, render_template, redirect, url_for, flash, session
-from flask_login import login_user, logout_user, current_user
+from flask_login import login_user, logout_user, current_user, login_required
+
+from app.blueprints.profile import send_otp, profile_bp
 from app.extensions import db, bcrypt
-from app.forms import LoginForm, RegisterForm
+from app.forms import LoginForm, RegisterForm, RequestOTPForm, OTPForm
 from app.models import User
 
 auth_bp = Blueprint(
@@ -44,6 +46,42 @@ def register():
 
     return render_template("register.html", form=form)
 
+@auth_bp.route("/forgot-password", methods=["GET", "POST"])
+def forgot_password():
+    form = RequestOTPForm()
+    if form.validate_on_submit():
+        email_or_username = form.email_or_username.data
+
+        user = User.query.filter(
+            (User.email == email_or_username) | (User.username == email_or_username)
+        ).first()
+
+        if user:
+            expires_at = send_otp(user)
+            flash("OTP has been sent to your email!", "success")
+            session['otp_expires_at'] = expires_at.isoformat()
+            return redirect(url_for("profile.change_password_page"))
+        else:
+            flash("User not found!", "danger")
+
+    return render_template("auth/forgot_password.html", form=form)
+
+@profile_bp.route("/change-password-page", methods=["GET"])
+def change_password_page():
+    otp_form = OTPForm()
+
+    # اگر OTP از قبل ساخته شده، زمان انقضا را بفرست
+    otp_expiration = None
+    if current_user.is_authenticated:
+        otp_expiration = current_user.otp_expiration
+    else:
+        # در فراموشی رمز، می‌توانیم از session یا کاربر موقتی استفاده کنیم
+        # مثلا از یک متغیر session برای نگهداری expires_at بعد از ارسال OTP
+        otp_expiration = session.get("otp_expires_at")
+
+    return render_template("base/change_password.html",
+                           otp_form=otp_form,
+                           otp_expiration=otp_expiration)
 
 @auth_bp.route("/logout")
 def logout():

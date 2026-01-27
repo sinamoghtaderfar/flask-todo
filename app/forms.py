@@ -54,3 +54,7 @@ class OTPForm(FlaskForm):
     new_password = PasswordField("New Password", validators=[DataRequired()])
     confirm_password = PasswordField("Confirm Password", validators=[DataRequired(), EqualTo("new_password")])
     submit = SubmitField("Confirm")
+
+class RequestOTPForm(FlaskForm):
+    email_or_username = StringField("Email or Username", validators=[DataRequired()])
+    submit = SubmitField("Send OTP")
