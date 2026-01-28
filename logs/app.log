@@ -1,0 +1,24 @@
+2026-01-28 23:40:52,358 [ERROR] app: Test error: division by zero
+Traceback (most recent call last):
+  File "D:\flask-todo\app\__init__.py", line 89, in trigger_error
+    1 / 0
+    ~~^~~
+ZeroDivisionError: division by zero
+2026-01-28 23:44:36,860 [ERROR] app: Test error: division by zero
+Traceback (most recent call last):
+  File "D:\flask-todo\app\__init__.py", line 89, in trigger_error
+    1 / 0
+    ~~^~~
+ZeroDivisionError: division by zero
+2026-01-28 23:50:18,024 [ERROR] app: Test error: division by zero
+Traceback (most recent call last):
+  File "D:\flask-todo\app\__init__.py", line 89, in trigger_error
+    1 / 0
+    ~~^~~
+ZeroDivisionError: division by zero
+2026-01-28 23:56:31,588 [ERROR] app: Test error: division by zero
+Traceback (most recent call last):
+  File "D:\flask-todo\app\__init__.py", line 89, in trigger_error
+    1 / 0
+    ~~^~~
+ZeroDivisionError: division by zero
