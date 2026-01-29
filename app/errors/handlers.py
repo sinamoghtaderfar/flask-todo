@@ -13,6 +13,9 @@ def register_error_handlers(app):
             admin_email = app.config.get("ADMIN_EMAIL")
             if not admin_email:
                 return
+            admin_email = app.config.get("ADMIN_EMAIL")
+            if not admin_email:
+                return
             msg = Message(
                 subject=f"Server Error: {error_id}",
                 recipients=[admin_email],
@@ -22,6 +25,7 @@ def register_error_handlers(app):
                      f"Error: {error}",
             )
             mail.send(msg)
+
         except Exception as e:
             logger.exception("Failed to send error email: %s", e)
 
