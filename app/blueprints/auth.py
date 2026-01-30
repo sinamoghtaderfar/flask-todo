@@ -65,13 +65,11 @@ def forgot_password():
 def change_password_page():
     otp_form = OTPForm()
 
-    # اگر OTP از قبل ساخته شده، زمان انقضا را بفرست
     otp_expiration = None
     if current_user.is_authenticated:
         otp_expiration = current_user.otp_expiration
     else:
-        # در فراموشی رمز، می‌توانیم از session یا کاربر موقتی استفاده کنیم
-        # مثلا از یک متغیر session برای نگهداری expires_at بعد از ارسال OTP
+
         otp_expiration = session.get("otp_expires_at")
 
     return render_template(
