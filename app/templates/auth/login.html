@@ -31,13 +31,16 @@
                             {{ form.remember.label(class="form-check-label") }}
                         </div>
                     </form>
+
+                    {% include "errors/messages.html" %}
+
                     <div class="text-center mt-3">
                         <a href="{{ url_for('auth.forgot_password') }}" class="text-decoration-none">
                             Forgot your password?
                         </a>
                     </div>
                     <p class="text-center mt-3">
-                        Don't have an account? <a href="/register">Register</a>
+                        Don't have an account? <a href="{{ url_for('auth.register') }}">Register</a>
                     </p>
                 </div>
             </div>

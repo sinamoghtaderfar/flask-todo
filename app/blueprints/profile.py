@@ -14,13 +14,19 @@ from flask import (
     current_app,
 )
 from flask_login import login_required, current_user
+from flask_wtf import form
 from werkzeug.utils import secure_filename
 from flask_mail import Message
 from flask_bcrypt import generate_password_hash
+from werkzeug.security import generate_password_hash
+from sqlalchemy.exc import SQLAlchemyError
 
 from app import User
 from app.extensions import db, mail
 from app.forms import UpdateProfileForm, OTPForm
+
+
+
 
 profile_bp = Blueprint("profile", __name__, url_prefix="/profile")
 
@@ -104,37 +110,51 @@ def delete_profile_image():
     return jsonify({"success": True})
 
 
+
+
 @profile_bp.route("/change-password", methods=["POST"])
 def change_password():
     otp_code = request.form.get("otp_code")
     new_password = request.form.get("new_password")
 
-    if current_user.is_authenticated:
-        user = current_user
+    if not otp_code or not new_password:
+        return jsonify({"success": False, "message": "OTP and new password are required!"})
 
-        if user.otp_code != otp_code:
-            return jsonify({"success": False, "message": "Invalid OTP!"})
-    else:
-        user = User.query.filter_by(otp_code=otp_code).first()
-        if not user:
-            return jsonify({"success": False, "message": "Invalid OTP!"})
+    try:
+        if current_user.is_authenticated:
+            user = current_user
 
-    if datetime.utcnow() > user.otp_expiration:
-        return jsonify({"success": False, "message": "OTP expired!"})
+            if user.otp_code != otp_code:
+                flash("Invalid OTP!", "danger")
+                return render_template("change_password.html", form=form)
 
-    user.password = generate_password_hash(new_password)
-    user.otp_code = None
-    user.otp_expiration = None
-    db.session.commit()
+        else:
+            user = User.query.filter_by(otp_code=otp_code).first()
+            if not user:
+                flash("User with this OTP not found!", "danger")
+                return render_template("change_password.html", form=form)
 
-    redirect_url = url_for("auth.login")
-    if current_user.is_authenticated:
+        if not user.otp_expiration or datetime.utcnow() > user.otp_expiration:
+            return jsonify({"success": False, "message": "OTP expired!"})
+
+        user.password = generate_password_hash(new_password)
+        user.otp_code = None
+        user.otp_expiration = None
+
+        db.session.commit()
+
         redirect_url = url_for("auth.login")
 
-    return jsonify(
-        {
+        return jsonify({
             "success": True,
             "message": "Password updated successfully!",
-            "redirect": redirect_url,
-        }
-    )
+            "redirect": redirect_url
+        })
+
+    except SQLAlchemyError:
+        db.session.rollback()
+        return jsonify({"success": False, "message": "Database error! Please try again."})
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"success": False, "message": f"Unexpected error: {str(e)}"})
