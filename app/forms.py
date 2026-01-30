@@ -14,10 +14,10 @@ from wtforms.validators import DataRequired, Length, Email, EqualTo
 class RegisterForm(FlaskForm):
 
     username = StringField(
-        "Username", validators=[DataRequired(), Length(min=6, max=12)]
+        "Username", validators=[DataRequired(), Length(min=6, max=15)]
     )
     email = StringField("Email", validators=[DataRequired(), Email()])
-    password = PasswordField(
+    password = StringField(
         "Password", validators=[DataRequired(), Length(min=6, max=12)]
     )
     confirm_password = PasswordField(
@@ -59,5 +59,5 @@ class OTPForm(FlaskForm):
 
 
 class RequestOTPForm(FlaskForm):
-    email_or_username = StringField("Email or Username", validators=[DataRequired(), Length(min=6, max=12)])
+    email_or_username = StringField("Email or Username", validators=[DataRequired()])
     submit = SubmitField("Send OTP")

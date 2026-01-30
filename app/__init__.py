@@ -22,7 +22,7 @@ def create_app():
         f"mysql://{os.getenv('DB_USER')}:{os.getenv('DB_PASSWORD')}"
         f"@{os.getenv('DB_HOST')}:{os.getenv('DB_PORT')}/{os.getenv('DB_NAME')}"
     )
-    app.config["ADMIN_EMAIL"] = os.getenv("ADMIN_EMAIL", "moghtaderfar@gmail.com")
+    app.config["ADMIN_EMAIL"] = os.getenv("ADMIN_EMAIL",)
     app.config["MAIL_SERVER"] = os.getenv("MAIL_SERVER")
     app.config["MAIL_PORT"] = int(os.getenv("MAIL_PORT", 587))
     app.config["MAIL_USE_TLS"] = os.getenv("MAIL_USE_TLS") == "True"

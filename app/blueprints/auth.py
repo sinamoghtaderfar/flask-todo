@@ -1,6 +1,3 @@
-import re
-from sqlalchemy.exc import IntegrityError
-
 from flask import Blueprint, render_template, redirect, url_for, flash, session
 from flask_login import login_user, logout_user, current_user
 
@@ -29,55 +26,16 @@ def login():
     return render_template("auth/login.html", form=form)
 
 
-
-
 @auth_bp.route("/register", methods=["GET", "POST"])
 def register():
     form = RegisterForm()
-
     if form.validate_on_submit():
-        username = form.username.data.strip()
-        email = form.email.data.lower().strip()
-
-        try:
-            if not re.fullmatch(r"[A-Za-z0-9_]+", username):
-                flash(
-                    "Username can contain only English letters, numbers, and underscore (_), with no spaces.",
-                    "danger"
-                )
-                return render_template("auth/register.html", form=form)
-
-            if User.query.filter_by(username=username).first():
-                flash("This username is already taken.", "danger")
-                return render_template("auth/register.html", form=form)
-
-            if User.query.filter_by(email=email).first():
-                flash("This email is already registered.", "danger")
-                return render_template("auth/register.html", form=form)
-
-            hashed = bcrypt.generate_password_hash(form.password.data).decode("utf-8")
-
-            user = User(
-                username=username,
-                email=email,
-                password=hashed
-            )
-
-            db.session.add(user)
-            db.session.commit()
-
-            flash("Account created successfully!", "success")
-            return redirect(url_for("auth.login"))
-
-        except IntegrityError:
-            db.session.rollback()
-            flash("Database error: possible duplicate entry. Please try again.", "danger")
-            return render_template("auth/register.html", form=form)
-
-        except Exception as e:
-            db.session.rollback()
-            flash(f"An unexpected error occurred: {str(e)}", "danger")
-            return render_template("auth/register.html", form=form)
+        hashed = bcrypt.generate_password_hash(form.password.data).decode("utf-8")
+        user = User(username=form.username.data, email=form.email.data, password=hashed)
+        db.session.add(user)
+        db.session.commit()
+        flash("Account created", "success")
+        return redirect(url_for("auth.login"))
 
     return render_template("auth/register.html", form=form)
 
