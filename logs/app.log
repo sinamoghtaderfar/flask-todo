@@ -1,0 +1,24 @@
+2026-01-31 18:15:14,559 [ERROR] app: Password change error: generate_password_hash() got an unexpected keyword argument 'method'
+Traceback (most recent call last):
+  File "D:\flask-todo\app\blueprints\profile.py", line 152, in change_password
+    user.password = generate_password_hash(new_password, method='scrypt')
+                    ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: generate_password_hash() got an unexpected keyword argument 'method'
+2026-01-31 18:15:51,118 [ERROR] app: Password change error: generate_password_hash() got an unexpected keyword argument 'method'
+Traceback (most recent call last):
+  File "D:\flask-todo\app\blueprints\profile.py", line 152, in change_password
+    user.password = generate_password_hash(new_password, method='scrypt')
+                    ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: generate_password_hash() got an unexpected keyword argument 'method'
+2026-01-31 18:19:10,766 [ERROR] app: Password change error: generate_password_hash() got an unexpected keyword argument 'method'
+Traceback (most recent call last):
+  File "D:\flask-todo\app\blueprints\profile.py", line 152, in change_password
+    user.password = generate_password_hash(new_password, method='scrypt')
+                    ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: generate_password_hash() got an unexpected keyword argument 'method'
+2026-01-31 18:22:12,366 [ERROR] app: Password change error: generate_password_hash() got an unexpected keyword argument 'method'
+Traceback (most recent call last):
+  File "D:\flask-todo\app\blueprints\profile.py", line 151, in change_password
+    user.password = generate_password_hash(new_password, method="pbkdf2:sha256")
+                    ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: generate_password_hash() got an unexpected keyword argument 'method'

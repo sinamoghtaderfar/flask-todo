@@ -25,3 +25,49 @@ These tests and extra features are primarily for **learning purposes**, so some 
 
 You can watch a short demo of the app on YouTube: (https://youtu.be/vJp9Q4pQh08)](https://www.youtube.com/watch?v=vJp9Q4pQh08)
 
+## 4. Requirements
+- Python 3.8+  
+- MySQL  
+- pip  
+
+## 5. Installation & Running
+
+1. git clone https://github.com/sinamoghtaderfar/flask-todo.git
+    cd flask-todo
+
+2. Create and activate a virtual environment
+
+- Windows:
+python -m venv venv
+venv\Scripts\activate
+
+- Linux / macOS:
+python3 -m venv venv
+source venv/bin/activate
+
+3. Install dependencies
+
+- pip install -r requirements.txt
+
+4. Setup MySQL Database
+
+- Login to MySQL: mysql -u root -p
+
+ 5. Create a database: CREATE DATABASE flask_todo;
+
+* Update the database URI in app/__init__: app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://username:password@localhost/flask_todo'
+
+6. Create tables
+
+7. Or using Flask CLI:
+# Linux / macOS
+export FLASK_APP=run.py
+export FLASK_ENV=development
+flask run
+
+# Windows
+set FLASK_APP=run.py
+set FLASK_ENV=development
+flask run
+
+app should now be running at: http://127.0.0.1:5000

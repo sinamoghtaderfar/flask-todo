@@ -2,7 +2,6 @@ import os
 import uuid
 import random
 from datetime import datetime, timedelta
-
 from flask import (
     Blueprint,
     render_template,
@@ -106,35 +105,66 @@ def delete_profile_image():
 
 @profile_bp.route("/change-password", methods=["POST"])
 def change_password():
-    otp_code = request.form.get("otp_code")
-    new_password = request.form.get("new_password")
+    otp_code = request.form.get("otp_code", "").strip()
+    new_password = request.form.get("new_password", "").strip()
+
+    if not otp_code or not new_password:
+        return jsonify({
+            "success": False,
+            "message": "OTP code and new password are required"
+        }), 400
+
+    if len(new_password) < 8:
+        return jsonify({
+            "success": False,
+            "message": "Password must be at least 8 characters long"
+        }), 400
+
+    user = None
 
     if current_user.is_authenticated:
         user = current_user
-
+        # Even for logged-in users, OTP must match
         if user.otp_code != otp_code:
-            return jsonify({"success": False, "message": "Invalid OTP!"})
+            return jsonify({
+                "success": False,
+                "message": "Invalid OTP code"
+            }), 400
     else:
         user = User.query.filter_by(otp_code=otp_code).first()
         if not user:
-            return jsonify({"success": False, "message": "Invalid OTP!"})
+            return jsonify({
+                "success": False,
+                "message": "Invalid OTP code"
+            }), 400
 
-    if datetime.utcnow() > user.otp_expiration:
-        return jsonify({"success": False, "message": "OTP expired!"})
+    if not user.otp_expiration or datetime.utcnow() > user.otp_expiration:
+        return jsonify({
+            "success": False,
+            "message": "OTP has expired"
+        }), 400
 
-    user.password = generate_password_hash(new_password)
-    user.otp_code = None
-    user.otp_expiration = None
-    db.session.commit()
+    try:
+        user.password = generate_password_hash(new_password)
+        user.otp_code = None
+        user.otp_expiration = None
+        db.session.commit()
 
-    redirect_url = url_for("auth.login")
+    except Exception as exc:
+        db.session.rollback()
+        current_app.logger.error(f"Password change error: {exc}", exc_info=True)
+        return jsonify({
+            "success": False,
+            "message": "An error occurred while saving changes. Please try again later."
+        }), 500
+
     if current_user.is_authenticated:
+        redirect_url = url_for("profile.profile")      # or "main.dashboard", etc.
+    else:
         redirect_url = url_for("auth.login")
 
-    return jsonify(
-        {
-            "success": True,
-            "message": "Password updated successfully!",
-            "redirect": redirect_url,
-        }
-    )
+    return jsonify({
+        "success": True,
+        "message": "Password updated successfully",
+        "redirect": redirect_url
+    })
